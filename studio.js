@@ -1,3 +1,5 @@
+import { experiments } from './experiments.js';
+import { drawExperiment } from './scene-view.js';
 import { bounce, pendulum } from './physics.js';
 const el = id => document.getElementById(id);
 import { replayAt, duration, energyShares } from './replay.js';
@@ -16,6 +18,7 @@ function resize(){
 const ink='#303c35', green='#427765', muted='#788577', rust='#a44d2e';
 let mode='bounce', t=0, playing=true, last=performance.now(), recorder=null;
 const settings={
+ ...Object.fromEntries(Object.entries(experiments).map(([id,scene])=>[id,scene.params])),
  bounce:[['Release height',1,3,.1,2,'m'],['Restitution',.25,.9,.05,.75,'']],
  pendulum:[['String length',.5,2,.05,1.5,'m'],['Release angle',3,15,1,14,'°']]
 };
@@ -70,6 +73,11 @@ function graph(sample,max,centered,unit){
  line(pts,green,3);oval(...pts.at(-1),4,4,green);label(start.toFixed(1)+' s',x,bottom+23,15,muted);label((start+span).toFixed(1)+' s',x+w-48,bottom+23,15,muted);
 }
 function render(){
+ if(experiments[mode]){
+   const [a,b]=settings[mode].map(s=>s[4]);
+   drawExperiment(screen,mode,t,a,b,el('vector').checked,el('trace').checked);
+   el('clock').value=t.toFixed(2)+' s';return;
+ }
  paper();platform();const [a,b]=settings[mode].map(s=>s[4]);
  if(mode==='bounce'){
  const s=bounce(t,a,b),floor=471,scale=109,r=27,x=377,y=floor-r-s.h*scale;
@@ -135,6 +143,10 @@ function sync(){el('play').textContent=playing?'Pause':'Play'}
 function select(modeName){
  mode=modeName;restart();el('guideLabel').hidden=mode!=='bounce';el('rate').disabled=guided();playing=true;sync();parameters();
  document.querySelectorAll('.tab').forEach(btn=>{const on=btn.dataset.mode===mode;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',on)});
+ if(experiments[mode]){
+   for(const key of ['title','intro','model'])el(key).textContent=experiments[mode][key];
+   render();return;
+ }
  el('title').textContent=mode==='bounce'?'The bouncing ball.':'The pendulum.';
  el('intro').textContent=mode==='bounce'?'Drop a basketball onto hardwood and follow the energy through each rebound.':'Release a suspended weight and watch its angle oscillate around equilibrium.';
  el('model').textContent=mode==='bounce'?'The ball falls under gravity (9.81 m/s²). At each impact, restitution e gives the fraction of vertical speed retained. The next peak reaches e² times the previous height. The ruler measures clearance beneath the ball.':'For small angles, the pendulum follows a cosine wave. Increasing the string length increases the period. This model assumes a massless string and negligible air resistance.';
@@ -157,7 +169,7 @@ function frame(now){
 }
 el('format').onchange=()=>{resize();render()};
 el('guide').onchange=()=>select(mode);
-resize();select('bounce');requestAnimationFrame(frame);
+resize();select('carts');requestAnimationFrame(frame);
 const rec=el('record'),status=el('status');
 if(!canvas.captureStream||!window.MediaRecorder){rec.disabled=true;status.textContent='Video recording is unavailable in this browser.'}
 rec.onclick=()=>{
