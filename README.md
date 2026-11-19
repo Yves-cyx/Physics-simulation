@@ -14,3 +14,5 @@ The model functions live in physics.js. The renderer, experiment controls and vi
 Portrait mode composes a 720 × 1280 scene for vertical video. The basketball's guided replay lasts 12 seconds and holds briefly at release, impact, and the first peak. Recording a guided replay starts it from release and downloads it at the end. Disable guided replay for free playback. The energy display shows gravitational, kinetic, and dissipated energy as fractions of the original drop energy.
 
 The studio also includes elliptical binary orbits, two coupled spring carts, and a three-body rolling race on parallel inclines. Both canvas formats and video recording work for each experiment. The models are in experiments.js and the scene drawings are in scene-view.js.
+
+Marble Cascade opens with a 20-second camera-following film. A rolling marble leaves a wooden track and strikes a stack of beams and posts. Change the tower height or release offset to rerun the fixed 120 Hz simulation. First contact sets the slow-motion cue. Matter.js 0.20.0 is bundled locally under its MIT license (vendor/matter-LICENSE).

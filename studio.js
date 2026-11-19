@@ -1,3 +1,6 @@
+import { simulate, duration as filmDuration } from './cascade.mjs';
+import { drawFilm } from './cascade-art.mjs';
+let filmRun, filmKey;
 import { experiments } from './experiments.js';
 import { drawExperiment } from './scene-view.js';
 import { bounce, pendulum } from './physics.js';
@@ -18,6 +21,7 @@ function resize(){
 const ink='#303c35', green='#427765', muted='#788577', rust='#a44d2e';
 let mode='bounce', t=0, playing=true, last=performance.now(), recorder=null;
 const settings={
+ cascade:[['Release offset',0,40,5,0,'px'],['Tower height',2,4,1,3,'levels']],
  ...Object.fromEntries(Object.entries(experiments).map(([id,scene])=>[id,scene.params])),
  bounce:[['Release height',1,3,.1,2,'m'],['Restitution',.25,.9,.05,.75,'']],
  pendulum:[['String length',.5,2,.05,1.5,'m'],['Release angle',3,15,1,14,'°']]
@@ -73,6 +77,12 @@ function graph(sample,max,centered,unit){
  line(pts,green,3);oval(...pts.at(-1),4,4,green);label(start.toFixed(1)+' s',x,bottom+23,15,muted);label((start+span).toFixed(1)+' s',x+w-48,bottom+23,15,muted);
 }
 function render(){
+ if(mode==='cascade'){
+   const [release,rows]=settings.cascade.map(s=>s[4]), key=release+'-'+rows;
+   if(key!==filmKey){filmRun=simulate(window.Matter,release,rows);filmKey=key}
+   drawFilm(screen,filmRun,reelTime,{vector:el('vector').checked,trace:el('trace').checked});
+   el('clock').value=reelTime.toFixed(2)+' s';return;
+ }
  if(experiments[mode]){
    const [a,b]=settings[mode].map(s=>s[4]);
    drawExperiment(screen,mode,t,a,b,el('vector').checked,el('trace').checked);
@@ -143,6 +153,12 @@ function sync(){el('play').textContent=playing?'Pause':'Play'}
 function select(modeName){
  mode=modeName;restart();el('guideLabel').hidden=mode!=='bounce';el('rate').disabled=guided();playing=true;sync();parameters();
  document.querySelectorAll('.tab').forEach(btn=>{const on=btn.dataset.mode===mode;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',on)});
+ if(mode==='cascade'){
+   el('title').textContent='木轨连锁反应';
+   el('intro').textContent='一颗红球沿轨道滚下，越过缺口，击中木塔。改变释放位置或层数，再看它怎样倒下。';
+   el('model').textContent='红球、木梁和塔顶球体按二维刚体求解，每秒计算 120 步。镜头在第一次碰撞前后放慢；球速曲线使用物理时间。';
+   el('rate').disabled=true;render();return;
+ }
  if(experiments[mode]){
    for(const key of ['title','intro','model'])el(key).textContent=experiments[mode][key];
    render();return;
@@ -153,10 +169,13 @@ function select(modeName){
  render();
 }
 document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>select(btn.dataset.mode));
-el('play').onclick=()=>{if(guided() && reelTime>=duration)restart();playing=!playing;last=performance.now();sync()};el('reset').onclick=()=>{restart();playing=false;sync();render()};
+el('play').onclick=()=>{if((guided() || mode==="cascade") && reelTime>= (mode==="cascade"?filmDuration:duration))restart();playing=!playing;last=performance.now();sync()};el('reset').onclick=()=>{restart();playing=false;sync();render()};
 function frame(now){
  const elapsed=Math.max(0,(now-last)/1000);last=now;
- if(playing && guided()){
+ if(playing && mode==='cascade'){
+   reelTime=Math.min(filmDuration,reelTime+elapsed);
+   if(reelTime===filmDuration){playing=false;sync();render();if(recorder?.state==='recording')recorder.stop()}
+ }else if(playing && guided()){
    reelTime=Math.min(duration,reelTime+elapsed);
    const sample=replayAt(reelTime,...settings.bounce.map(s=>s[4]));
    t=sample.time;caption=sample.caption;
@@ -169,7 +188,7 @@ function frame(now){
 }
 el('format').onchange=()=>{resize();render()};
 el('guide').onchange=()=>select(mode);
-resize();select('carts');requestAnimationFrame(frame);
+resize();select('cascade');requestAnimationFrame(frame);
 const rec=el('record'),status=el('status');
 if(!canvas.captureStream||!window.MediaRecorder){rec.disabled=true;status.textContent='Video recording is unavailable in this browser.'}
 rec.onclick=()=>{
@@ -180,11 +199,11 @@ rec.onclick=()=>{
  recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});const chunks=[],scene=mode;
  recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
  recorder.onstop=()=>{lockControls(false);stream.getTracks().forEach(track=>track.stop());const url=URL.createObjectURL(new Blob(chunks,{type:recorder.mimeType}));const link=document.createElement('a');link.href=url;link.download=scene+(recorder.mimeType.includes('mp4')?'.mp4':'.webm');link.textContent='Download recording';status.replaceChildren(link);link.click();setTimeout(()=>URL.revokeObjectURL(url),300000);rec.textContent='●  Record experiment'};
- restart();playing=true;sync();render();recorder.start();lockControls(true);rec.textContent='■  Finish recording';status.textContent=guided()?'Recording the 12-second replay. Download starts automatically.':'Recording from the start. Finish to download.';
+ restart();playing=true;sync();render();recorder.start();lockControls(true);rec.textContent='■  Finish recording';status.textContent=mode==='cascade'?'Recording the 20-second film.':guided()?'Recording the 12-second replay. Download starts automatically.':'Recording from the start. Finish to download.';
  }catch(error){stream?.getTracks().forEach(track=>track.stop());status.textContent='Recording could not start in this browser.'}
 };
 
 function lockControls(locked){
  document.querySelectorAll('.tab, #params input, #guide, #format, #reset, #play, #rate').forEach(control=>control.disabled=locked);
- el('rate').disabled=locked||guided();
+ el('rate').disabled=locked||guided()||mode==='cascade';
 }
