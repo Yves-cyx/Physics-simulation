@@ -1,6 +1,18 @@
 import { bounce, pendulum } from './physics.js';
 const el = id => document.getElementById(id);
-const canvas = el('field'), ctx = canvas.getContext('2d');
+import { replayAt, duration, energyShares } from './replay.js';
+const canvas = el('field'), screen = canvas.getContext('2d');
+const illustration = document.createElement('canvas');
+illustration.width=1000; illustration.height=640;
+const ctx=illustration.getContext('2d');
+let reelTime=0, caption='';
+const guided=()=>mode==='bounce' && el('guide').checked;
+function restart(){reelTime=0;t=0;last=performance.now();caption=replayAt(0,1,1).caption}
+function resize(){
+ const vertical=el('format').value==='portrait';
+ canvas.width=vertical?720:1000;canvas.height=vertical?1280:640;
+ canvas.classList.toggle('portrait',vertical);
+}
 const ink='#303c35', green='#427765', muted='#788577', rust='#a44d2e';
 let mode='bounce', t=0, playing=true, last=performance.now(), recorder=null;
 const settings={
@@ -14,7 +26,7 @@ function parameters(){
   const row=document.createElement('span'), output=document.createElement('output'), input=document.createElement('input');
   row.append(spec[0],output); input.type='range';
   [input.min,input.max,input.step,input.value]=spec.slice(1,5);
-  const update=()=>{spec[4]=Number(input.value);output.value=spec[4]+' '+spec[5];t=0;last=performance.now()};
+  const update=()=>{spec[4]=Number(input.value);output.value=spec[4]+' '+spec[5];restart()};
   input.oninput=update;update();label.append(row,input);el('params').append(label);
  }
 }
@@ -79,11 +91,49 @@ function render(){
  if(el('trace').checked)graph(time=>pendulum(time,a,b).angle*180/Math.PI,b,true,'deg');
  label('T ≈ 2π √(L/g)',45,574,36,ink,'Georgia');label('Small-angle pendulum',45,609,17,green);
  }
- el('clock').value=t.toFixed(2)+' s';
+ compose(a,b);
+ el('clock').value=(guided()?reelTime:t).toFixed(2)+' s';
+}
+function print(text,x,y,size,color=ink,font='Georgia'){
+ screen.fillStyle=color;screen.font=size+'px '+font;screen.fillText(text,x,y);
+}
+function energy(x,y,width,height,e){
+ const shares=energyShares(bounce(t,height,e),height);
+ const colors=['#638e78','#d98046','#a8a79b'];
+ let left=x;
+ shares.forEach((part,i)=>{screen.fillStyle=colors[i];screen.fillRect(left,y,width*part,12);left+=width*part});
+ const names=['Height','Motion','Dissipated'];
+ shares.forEach((part,i)=>print(names[i]+' '+Math.round(100*part)+'%',x+i*width/3,y+39,width<430?13:20,ink,'monospace'));
+}
+function compose(a,b){
+ if(canvas.width===1000){
+   screen.drawImage(illustration,0,0);
+   if(mode==='bounce')energy(625,540,350,a,b);
+   if(guided())print(caption,44,84,22,green);
+   return;
+ }
+ screen.fillStyle='#f5f1e4';screen.fillRect(0,0,720,1280);
+ print('MOTION NOTEBOOK',48,64,22,green,'monospace');
+ print(mode==='bounce'?'The bouncing ball.':'The pendulum.',46,161,65);
+ print(guided()?caption:mode==='bounce'?'A study of successive impacts.':'A study of periodic motion.',49,218,29,green);
+ screen.drawImage(illustration,70,86,550,444,6,265,706,570);
+ const isBall=mode==='bounce';
+ const measurement=isBall?bounce(t,a,b).h.toFixed(2)+' m':(pendulum(t,a,b).angle*180/Math.PI).toFixed(1)+'°';
+ print(measurement,48,927,52);
+ print(isBall?'Clearance':'Angle',50,963,22,muted,'monospace');
+ if(el('trace').checked)screen.drawImage(illustration,647,279,320,196,357,835,320,196);
+ if(isBall){
+   print('Energy from the original drop',48,1081,29);
+   energy(48,1104,624,a,b);
+   print('First rebound  '+(a*b*b).toFixed(2)+' m',48,1215,27,green,'monospace');
+ }else{
+   print('Period of one swing',48,1090,29);
+   print((2*Math.PI*Math.sqrt(a/9.81)).toFixed(2)+' s',48,1158,49,green);
+ }
 }
 function sync(){el('play').textContent=playing?'Pause':'Play'}
 function select(modeName){
- mode=modeName;t=0;last=performance.now();playing=true;sync();parameters();
+ mode=modeName;restart();el('guideLabel').hidden=mode!=='bounce';el('rate').disabled=guided();playing=true;sync();parameters();
  document.querySelectorAll('.tab').forEach(btn=>{const on=btn.dataset.mode===mode;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',on)});
  el('title').textContent=mode==='bounce'?'The bouncing ball.':'The pendulum.';
  el('intro').textContent=mode==='bounce'?'Drop a basketball onto hardwood and follow the energy through each rebound.':'Release a suspended weight and watch its angle oscillate around equilibrium.';
@@ -91,9 +141,23 @@ function select(modeName){
  render();
 }
 document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>select(btn.dataset.mode));
-el('play').onclick=()=>{playing=!playing;last=performance.now();sync()};el('reset').onclick=()=>{t=0;last=performance.now();playing=false;sync();render()};
-function frame(now){if(playing)t+=Math.min((now-last)/1000,.1)*Number(el('rate').value);last=now;render();requestAnimationFrame(frame)}
-select('bounce');requestAnimationFrame(frame);
+el('play').onclick=()=>{if(guided() && reelTime>=duration)restart();playing=!playing;last=performance.now();sync()};el('reset').onclick=()=>{restart();playing=false;sync();render()};
+function frame(now){
+ const elapsed=Math.max(0,(now-last)/1000);last=now;
+ if(playing && guided()){
+   reelTime=Math.min(duration,reelTime+elapsed);
+   const sample=replayAt(reelTime,...settings.bounce.map(s=>s[4]));
+   t=sample.time;caption=sample.caption;
+   if(reelTime===duration){
+     playing=false;sync();render();
+     if(recorder?.state==='recording')recorder.stop();
+   }
+ }else if(playing)t+=Math.min(elapsed,.1)*Number(el('rate').value);
+ render();requestAnimationFrame(frame);
+}
+el('format').onchange=()=>{resize();render()};
+el('guide').onchange=()=>select(mode);
+resize();select('bounce');requestAnimationFrame(frame);
 const rec=el('record'),status=el('status');
 if(!canvas.captureStream||!window.MediaRecorder){rec.disabled=true;status.textContent='Video recording is unavailable in this browser.'}
 rec.onclick=()=>{
@@ -103,7 +167,12 @@ rec.onclick=()=>{
  stream=canvas.captureStream(30);const mime=['video/mp4','video/webm;codecs=vp9','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
  recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});const chunks=[],scene=mode;
  recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
- recorder.onstop=()=>{stream.getTracks().forEach(track=>track.stop());const url=URL.createObjectURL(new Blob(chunks,{type:recorder.mimeType}));const link=document.createElement('a');link.href=url;link.download=scene+(recorder.mimeType.includes('mp4')?'.mp4':'.webm');link.textContent='Download recording';status.replaceChildren(link);link.click();setTimeout(()=>URL.revokeObjectURL(url),300000);rec.textContent='●  Record experiment'};
- t=0;last=performance.now();playing=true;sync();render();recorder.start();rec.textContent='■  Finish recording';status.textContent='Recording from the start. Finish to download.';
+ recorder.onstop=()=>{lockControls(false);stream.getTracks().forEach(track=>track.stop());const url=URL.createObjectURL(new Blob(chunks,{type:recorder.mimeType}));const link=document.createElement('a');link.href=url;link.download=scene+(recorder.mimeType.includes('mp4')?'.mp4':'.webm');link.textContent='Download recording';status.replaceChildren(link);link.click();setTimeout(()=>URL.revokeObjectURL(url),300000);rec.textContent='●  Record experiment'};
+ restart();playing=true;sync();render();recorder.start();lockControls(true);rec.textContent='■  Finish recording';status.textContent=guided()?'Recording the 12-second replay. Download starts automatically.':'Recording from the start. Finish to download.';
  }catch(error){stream?.getTracks().forEach(track=>track.stop());status.textContent='Recording could not start in this browser.'}
 };
+
+function lockControls(locked){
+ document.querySelectorAll('.tab, #params input, #guide, #format, #reset, #play, #rate').forEach(control=>control.disabled=locked);
+ el('rate').disabled=locked||guided();
+}
