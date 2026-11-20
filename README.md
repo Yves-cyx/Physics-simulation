@@ -24,3 +24,9 @@ Open tower.html for the tower workbench. Drag either lower support, run the 7-se
 让参与者从首页开始，在有访问权限的手机上操作。主持人只读任务：“只移动一根底柱，让两颗绿球在 7 秒内都不碰地，然后指给我看两次结果哪里不同。”不要演示入口或指认按钮。当前托管站为私有，可在站点所有者已打开的设备上当面试用。
 
 每人记录四项：第一次停顿的位置和原话、是否独立找到实验、是否独立完成改塔和运行、能否指出触地差异对应的画面。需要提示时记录提示内容。三次结束后优先修复导致多人无法继续的同一处问题。这是试用方案，尚未收集真人结果。
+
+### 地震中的双塔
+
+Open `seismic.html` for an 18-story structural dynamics experiment. Compare two identical shear buildings under the same finite-duration synthetic ground motion. The isolated building adds a translating base mass and a bilinear bearing with kinematic hardening and viscous damping. Both models use ground-relative coordinates and report absolute roof acceleration. Vary peak ground acceleration, carrier frequency and the period corresponding to the bearing's post-yield stiffness. Scrub the response, inspect the force–displacement loop or jump to peak drift and bearing travel. The superstructure remains elastic throughout. Source, diagrams and simulation run entirely in the browser.
+
+Run `node --test tests/seismic.test.mjs` to check zero input, fixed-base invariance, plastic dissipation and time-step refinement. The ground-relative sign convention follows the [OpenSees uniform-excitation equations](https://opensees.github.io/OpenSeesDocumentation/user/manual/model/pattern/uniformExcitationPattern.html).

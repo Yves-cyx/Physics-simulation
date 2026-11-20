@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地震中的双塔 · Motion Notebook</title>
+<link rel="stylesheet" href="seismic.css"></head>
+<body><header><a class="brand" href="./index.html"><i>∿</i> Motion Notebook</a><a href="./index.html">实验目录</a></header>
+<main><div class="heading"><p class="kicker">STRUCTURAL DYNAMICS</p><h1>地震中的双塔</h1><p>两栋十八层楼承受同一段地震动。改变振动频率，观察楼层之间的错动，以及隔震支座要让出多少位移。</p></div>
+<section class="viewer" aria-label="结构动画与播放控制"><canvas id="scene" width="1100" height="635" role="img" aria-label="两座十八层建筑在同一地震下的响应。左侧固定基础，右侧基底隔震。"></canvas>
+<div class="transport"><button id="play">暂停</button><button id="restart">从头播放</button><label class="timeline"><span class="sr">模拟时间</span><input id="time" type="range" min="0" max="30" step="0.0166667" value="0"></label><output id="clock" for="time">0.00 / 30 s</output><label>速度 <select id="speed"><option value=".25">¼×</option><option value=".5">½×</option><option value="1" selected>1×</option></select></label><button id="cinema" aria-pressed="false">竖屏观影</button></div></section>
+<div class="panels"><section><h2>输入工况</h2><div class="presets"><button id="reference">标准输入</button><button id="resonant">低频输入</button></div>
+<label class="field" for="pga">地面峰值加速度 <output id="pgaValue"></output></label><input id="pga" type="range" min="0.05" max=".45" step=".01" value=".28">
+<label class="field" for="frequency">主波包频率 <output id="frequencyValue"></output></label><input id="frequency" type="range" min=".35" max="1.15" step=".01" value=".72">
+<label class="field" for="period">支座屈服后刚度对应周期 <output id="periodValue"></output></label><input id="period" type="range" min="2" max="5" step=".1" value="3.2">
+<label class="check"><input id="follow" type="checkbox" checked> 自动推近隔震层</label>
+</section><section><h2>三十秒内的峰值</h2>
+<table><thead><tr><th scope="col">观测量</th><th scope="col">固定基础</th><th scope="col">基底隔震</th></tr></thead><tbody>
+<tr><th scope="row">屋顶绝对加速度</th><td id="fa"></td><td id="ia"></td></tr>
+<tr><th scope="row">最大层间位移角</th><td id="fd"></td><td id="idrift"></td></tr>
+<tr><th scope="row">基底相对地面位移</th><td>0 cm</td><td id="ib"></td></tr></tbody></table>
+<div class="events"><button id="jumpDrift">看最大层间错动</button><button id="jumpBase">看支座最大位移</button><button id="jumpTail">看震后余振</button></div><p id="eventNote" role="status"></p>
+</section><section class="loop"><div><h2>支座的力与位移</h2><p>沿时间轴来回拖动。支座反向加载时会走出另一条路径，闭合曲线围出的面积对应一个循环的塑性耗能。</p><p class="energy">累计塑性耗能 <output id="energy"></output></p></div><canvas id="loop" width="780" height="284" role="img" aria-label="隔震支座的恢复力与水平位移滞回曲线"></canvas></section></div>
+<details><summary>模型与读数</summary><p>两塔上部完全相同，每层高 3.4 m，各层质量和侧向刚度随高度递减。固定基础模型有 18 个水平自由度，隔震模型增加 1 个基底自由度。楼层间以线弹性剪切弹簧和黏性阻尼器连接，隔震层采用双线性随动硬化与并联黏性阻尼。支座图显示弹塑性恢复力，黏性阻尼单独参与动力计算。</p><p>地震动由五个有限时长的波包合成，21 s 后停止输入。积分步长为 1/300 s，读数以 60 Hz 采样。层间位移角取相邻楼板的水平位移差除以层高。动画放大了水平位移，两塔使用相同倍率。上部结构仅模拟弹性水平响应，未考虑扭转、损伤或倒塌。</p></details>
+</main><script type="module" src="seismic-page.mjs"></script></body></html>

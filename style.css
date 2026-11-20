@@ -3,3 +3,5 @@ article{align-self:start;background:#e5e6db}canvas.portrait{width:auto;height:mi
 nav{flex-wrap:wrap}
 
 #towerEntry{background:#fffdf5;padding:10px 16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}#towerEntry[hidden]{display:none}#buildTower{display:inline-block;border-radius:6px;background:#2e5146;color:white;text-decoration:none;padding:12px 18px;font-weight:600}
+
+.seismic-entry{font-size:14px;padding:7px 16px;border:1px solid #a4b6a7;border-radius:30px;display:inline-flex;align-items:center;text-decoration:none;background:#e5ece1;color:#254c42;white-space:nowrap}
