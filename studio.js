@@ -79,7 +79,7 @@ function graph(sample,max,centered,unit){
 function render(){
  if(mode==='cascade'){
    const [release,rows]=settings.cascade.map(s=>s[4]), key=release+'-'+rows;
-   if(key!==filmKey){filmRun=simulate(window.Matter,release,rows);filmKey=key}
+   if(key!==filmKey){el('buildTower').href='./tower.html?from=film&posts=656,737&base=656,737&release='+release+'&rows='+rows;filmRun=simulate(window.Matter,release,rows);filmKey=key}
    drawFilm(screen,filmRun,reelTime,{vector:el('vector').checked,trace:el('trace').checked});
    el('clock').value=reelTime.toFixed(2)+' s';return;
  }
@@ -151,6 +151,7 @@ function compose(a,b){
 }
 function sync(){el('play').textContent=playing?'Pause':'Play'}
 function select(modeName){
+ el("towerEntry").hidden=modeName!=="cascade";
  mode=modeName;restart();el('guideLabel').hidden=mode!=='bounce';el('rate').disabled=guided();playing=true;sync();parameters();
  document.querySelectorAll('.tab').forEach(btn=>{const on=btn.dataset.mode===mode;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',on)});
  if(mode==='cascade'){

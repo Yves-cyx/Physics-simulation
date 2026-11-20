@@ -18,3 +18,9 @@ The studio also includes elliptical binary orbits, two coupled spring carts, and
 Marble Cascade opens with a 20-second camera-following film. A rolling marble leaves a wooden track and strikes a stack of beams and posts. Change the tower height or release offset to rerun the fixed 120 Hz simulation. First contact sets the slow-motion cue. Matter.js 0.20.0 is bundled locally under its MIT license (vendor/matter-LICENSE).
 
 Open tower.html for the tower workbench. Drag either lower support, run the 7-second trial, scrub individual 120 Hz frames, or jump to first contact. Dashed teal outlines replay a pinned design aligned to first ball–tower contact. Ground contacts are counted once per green ball. Share links encode both support pairs.
+
+### 手机首次试用（建议 3 人，每人约 5 分钟）
+
+让参与者从首页开始，在有访问权限的手机上操作。主持人只读任务：“只移动一根底柱，让两颗绿球在 7 秒内都不碰地，然后指给我看两次结果哪里不同。”不要演示入口或指认按钮。当前托管站为私有，可在站点所有者已打开的设备上当面试用。
+
+每人记录四项：第一次停顿的位置和原话、是否独立找到实验、是否独立完成改塔和运行、能否指出触地差异对应的画面。需要提示时记录提示内容。三次结束后优先修复导致多人无法继续的同一处问题。这是试用方案，尚未收集真人结果。
