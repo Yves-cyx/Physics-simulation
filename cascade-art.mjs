@@ -87,3 +87,5 @@ export function drawFilm(c,sim,seconds,options={}){
  const sx=portrait?492:828;txt(c,'模型时间',sx,gy-gh+10,17,muted);txt(c,t.toFixed(2)+' s',sx,gy-gh+48,32,ink,true);
  line(c,[[m,H-18],[W-m,H-18]],'#d5cfba',2);line(c,[[m,H-18],[m+(W-2*m)*seconds/20,H-18]],red,3);c.restore();
 }
+
+export { terrain, marble, timber };

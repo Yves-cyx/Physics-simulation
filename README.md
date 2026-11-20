@@ -16,3 +16,5 @@ Portrait mode composes a 720 × 1280 scene for vertical video. The basketball's 
 The studio also includes elliptical binary orbits, two coupled spring carts, and a three-body rolling race on parallel inclines. Both canvas formats and video recording work for each experiment. The models are in experiments.js and the scene drawings are in scene-view.js.
 
 Marble Cascade opens with a 20-second camera-following film. A rolling marble leaves a wooden track and strikes a stack of beams and posts. Change the tower height or release offset to rerun the fixed 120 Hz simulation. First contact sets the slow-motion cue. Matter.js 0.20.0 is bundled locally under its MIT license (vendor/matter-LICENSE).
+
+Open tower.html for the tower workbench. Drag either lower support, run the 7-second trial, scrub individual 120 Hz frames, or jump to first contact. Dashed teal outlines replay a pinned design aligned to first ball–tower contact. Ground contacts are counted once per green ball. Share links encode both support pairs.
